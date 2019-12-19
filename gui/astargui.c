@@ -53,7 +53,7 @@ void init_gui(ProgramData* pdata) {
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(pdata->drawingArea, "draw", G_CALLBACK(on_draw),
                      pdata->adata);
-    g_signal_connect(btnStart, "clicked", G_CALLBACK(on_start), pdata->adata);
+    g_signal_connect(btnStart, "clicked", G_CALLBACK(on_start), pdata);
     g_signal_connect(pdata->drawingArea, "motion-notify-event",
                      G_CALLBACK(on_mouse_move), pdata);
     g_signal_connect(pdata->drawingArea, "button-press-event",
@@ -104,13 +104,15 @@ void on_start(GtkWidget* widget, gpointer data) {
     if (data == NULL)
         return;
 
-    AData* d = (AData*)data;
+    ProgramData* d = (ProgramData*)data;
 
-    if (d->grid == NULL)
+    if (d->adata->grid == NULL)
         return;
 
     // Call astar main method
-    astar(d->grid, d->columns, d->rows, d->startX, d->startY, d->endX, d->endY);
+    astar(d->adata->grid, d->adata->columns, d->adata->rows, d->adata->startX,
+          d->adata->startY, d->adata->endX, d->adata->endY);
+    gtk_widget_queue_draw(d->drawingArea); // Force redraw
 }
 
 gboolean on_mouse_move(GtkWidget* widget, GdkEvent* event, gpointer data) {
