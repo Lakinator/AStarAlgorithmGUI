@@ -50,7 +50,7 @@ void init_gui(ProgramData* pdata) {
                                                   GDK_BUTTON_PRESS_MASK |
                                                   GDK_BUTTON_RELEASE_MASK);
 
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(window, "destroy", G_CALLBACK(on_exit), pdata->adata);
     g_signal_connect(pdata->drawingArea, "draw", G_CALLBACK(on_draw),
                      pdata->adata);
     g_signal_connect(btnStart, "clicked", G_CALLBACK(on_start), pdata);
@@ -86,6 +86,8 @@ void on_exit(GtkWidget* widget, gpointer data) {
     for (int i = 0; i < d->columns; i++)
         free(d->grid[i]);
     free(d->grid);
+
+    gtk_main_quit();
 }
 
 gboolean on_draw(GtkWidget* widget, cairo_t* cr, gpointer data) {
@@ -226,7 +228,7 @@ gboolean update_grid(ProgramData* pdata) {
         // Only update the cell if the color actually changed
         if (p_x < pdata->adata->columns && p_y < pdata->adata->rows &&
             pdata->adata->grid[p_x][p_y] != pdata->selectedColor) {
-            
+
             // Change cell color
             pdata->adata->grid[p_x][p_y] = pdata->selectedColor;
 
