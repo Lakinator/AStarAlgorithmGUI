@@ -109,10 +109,16 @@ void on_start(GtkWidget* widget, gpointer data) {
     if (d->adata->grid == NULL)
         return;
 
-    // Call astar main method
-    astar(d->adata->grid, d->adata->columns, d->adata->rows, d->adata->startX,
-          d->adata->startY, d->adata->endX, d->adata->endY);
-    gtk_widget_queue_draw(d->drawingArea); // Force redraw
+    // Call astar main method if start/end exist
+    if (d->adata->startX >= 0 && d->adata->startY >= 0 && d->adata->endX >= 0 &&
+        d->adata->endY >= 0) {
+        astar(d->adata->grid, d->adata->columns, d->adata->rows,
+              d->adata->startX, d->adata->startY, d->adata->endX,
+              d->adata->endY);
+        gtk_widget_queue_draw(d->drawingArea); // Force redraw
+    } else {
+        printf("Error: No start/end cell exists!\n");
+    }
 }
 
 gboolean on_mouse_move(GtkWidget* widget, GdkEvent* event, gpointer data) {
@@ -219,8 +225,7 @@ gboolean update_grid(ProgramData* pdata) {
 
         // Set grid if button is pressed
         if (p_x < pdata->adata->columns && p_y < pdata->adata->rows &&
-            (p_x != pdata->adata->startX || p_y != pdata->adata->startY) &&
-            (p_x != pdata->adata->endX || p_y != pdata->adata->endY)) {
+            pdata->adata->grid[p_x][p_y] != pdata->selectedColor) {
             pdata->adata->grid[p_x][p_y] = pdata->selectedColor;
 
             // Only one start/end at a time -> remove last start/end by
@@ -240,6 +245,17 @@ gboolean update_grid(ProgramData* pdata) {
                 }
                 pdata->adata->endX = p_x;
                 pdata->adata->endY = p_y;
+            } else {
+                // Clear previous start/end coordinates if they were overdrawn
+                if (p_x == pdata->adata->startX &&
+                    p_y == pdata->adata->startY) {
+                    pdata->adata->startX = -1;
+                    pdata->adata->startY = -1;
+                } else if (p_x == pdata->adata->endX &&
+                           p_y == pdata->adata->endY) {
+                    pdata->adata->endX = -1;
+                    pdata->adata->endY = -1;
+                }
             }
         }
 
