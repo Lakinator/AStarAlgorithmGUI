@@ -17,7 +17,7 @@ void init_gui(ProgramData* pdata) {
     pdata->btnColorStart = gtk_button_new_with_label("Start");
     pdata->btnColorEnd = gtk_button_new_with_label("End");
 
-    btnStart = gtk_button_new_with_label("Start");
+    btnStart = gtk_button_new_with_label("Run");
     labelStart = gtk_label_new("A* Version 1.0");
     labelTiles = gtk_label_new("Choose Tile:");
     gridScale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 20, 80, 1);
@@ -223,9 +223,11 @@ gboolean update_grid(ProgramData* pdata) {
         int p_x = pdata->mdata->x / pdata->adata->cellSize;
         int p_y = pdata->mdata->y / pdata->adata->cellSize;
 
-        // Set grid if button is pressed
+        // Only update the cell if the color actually changed
         if (p_x < pdata->adata->columns && p_y < pdata->adata->rows &&
             pdata->adata->grid[p_x][p_y] != pdata->selectedColor) {
+            
+            // Change cell color
             pdata->adata->grid[p_x][p_y] = pdata->selectedColor;
 
             // Only one start/end at a time -> remove last start/end by
@@ -311,5 +313,15 @@ gboolean realloc_grid(AData* adata, int columns_new, int rows_new) {
 
         adata->columns = columns_new;
         adata->rows = rows_new;
+
+        // Check if start/end were removed
+        if (adata->startX >= adata->columns || adata->startY >= adata->rows) {
+            adata->startX = -1;
+            adata->startY = -1;
+        }
+        if (adata->endX >= adata->columns || adata->endY >= adata->rows) {
+            adata->endX = -1;
+            adata->endY = -1;
+        }
     }
 }
