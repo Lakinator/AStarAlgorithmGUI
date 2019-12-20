@@ -251,7 +251,6 @@ gboolean update_grid(ProgramData* pdata) {
 
 gboolean realloc_grid(AData* adata, int columns_new, int rows_new) {
     // Realloc grid only if size changed
-    // TODO: split up when only one parameter changed
     if (adata->columns != columns_new || adata->rows != rows_new) {
 
         // Columns
@@ -281,8 +280,6 @@ gboolean realloc_grid(AData* adata, int columns_new, int rows_new) {
                 return FALSE;
             }
 
-            // TODO: NEW INIT DOESN'T ALWAYS WORK
-            // -> resize too quick
             // Init new int's to 0
             for (int j = adata->rows; j < rows_new; j++) {
                 adata->grid[i][j] = tile_empty;
@@ -290,7 +287,7 @@ gboolean realloc_grid(AData* adata, int columns_new, int rows_new) {
 
             // Init new int rows to 0
             if (i >= adata->columns) {
-                for (int j = adata->rows; j < rows_new; j++) {
+                for (int j = 0; j < rows_new; j++) {
                     adata->grid[i][j] = tile_empty;
                 }
             }
