@@ -8,14 +8,16 @@ void init_gui(ProgramData* pdata) {
     GtkWidget *labelStart, *labelTiles;
     GtkWidget* gridScale;
 
+    pdata->gdata = malloc(sizeof(GtkData));
+
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     layoutBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     layoutGrid = gtk_grid_new();
-    pdata->drawingArea = gtk_drawing_area_new();
-    pdata->btnColorEmpty = gtk_button_new_with_label("Erase");
-    pdata->btnColorWall = gtk_button_new_with_label("Wall");
-    pdata->btnColorStart = gtk_button_new_with_label("Start");
-    pdata->btnColorEnd = gtk_button_new_with_label("End");
+    pdata->gdata->drawingArea = gtk_drawing_area_new();
+    pdata->gdata->btnColorEmpty = gtk_button_new_with_label("Erase");
+    pdata->gdata->btnColorWall = gtk_button_new_with_label("Wall");
+    pdata->gdata->btnColorStart = gtk_button_new_with_label("Start");
+    pdata->gdata->btnColorEnd = gtk_button_new_with_label("End");
 
     btnStart = gtk_button_new_with_label("Run");
     labelStart = gtk_label_new("A* Version 1.0");
@@ -28,46 +30,52 @@ void init_gui(ProgramData* pdata) {
     gtk_grid_set_column_spacing(GTK_GRID(layoutGrid), 15);
     gtk_grid_set_row_spacing(GTK_GRID(layoutGrid), 15);
 
-    gtk_widget_set_size_request(GTK_WIDGET(pdata->drawingArea), 650, 450);
+    gtk_widget_set_size_request(GTK_WIDGET(pdata->gdata->drawingArea), 650,
+                                450);
 
     gtk_range_set_value(GTK_RANGE(gridScale), pdata->adata->cellSize);
 
     // Basic layout containers
     gtk_container_add(GTK_CONTAINER(window), layoutBox);
     gtk_box_pack_start(GTK_BOX(layoutBox), layoutGrid, FALSE, FALSE, 20);
-    gtk_box_pack_start(GTK_BOX(layoutBox), pdata->drawingArea, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(layoutBox), pdata->gdata->drawingArea, TRUE,
+                       TRUE, 0);
     // Grid components
     gtk_grid_attach(GTK_GRID(layoutGrid), labelStart, 0, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(layoutGrid), btnStart, 0, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(layoutGrid), labelTiles, 0, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->btnColorEmpty, 0, 3, 1, 1);
-    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->btnColorWall, 0, 4, 1, 1);
-    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->btnColorStart, 0, 5, 1, 1);
-    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->btnColorEnd, 0, 6, 1, 1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnColorEmpty, 0, 3, 1,
+                    1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnColorWall, 0, 4, 1,
+                    1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnColorStart, 0, 5, 1,
+                    1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnColorEnd, 0, 6, 1,
+                    1);
     gtk_grid_attach(GTK_GRID(layoutGrid), gridScale, 0, 7, 2, 1);
 
-    gtk_widget_set_events(pdata->drawingArea, GDK_POINTER_MOTION_MASK |
-                                                  GDK_BUTTON_PRESS_MASK |
-                                                  GDK_BUTTON_RELEASE_MASK);
+    gtk_widget_set_events(pdata->gdata->drawingArea,
+                          GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
+                              GDK_BUTTON_RELEASE_MASK);
 
-    g_signal_connect(window, "destroy", G_CALLBACK(on_exit), pdata->adata);
-    g_signal_connect(pdata->drawingArea, "draw", G_CALLBACK(on_draw),
+    g_signal_connect(window, "destroy", G_CALLBACK(on_exit), pdata);
+    g_signal_connect(pdata->gdata->drawingArea, "draw", G_CALLBACK(on_draw),
                      pdata->adata);
     g_signal_connect(btnStart, "clicked", G_CALLBACK(on_start), pdata);
-    g_signal_connect(pdata->drawingArea, "motion-notify-event",
+    g_signal_connect(pdata->gdata->drawingArea, "motion-notify-event",
                      G_CALLBACK(on_mouse_move), pdata);
-    g_signal_connect(pdata->drawingArea, "button-press-event",
+    g_signal_connect(pdata->gdata->drawingArea, "button-press-event",
                      G_CALLBACK(on_mouse_move), pdata);
-    g_signal_connect(pdata->drawingArea, "button-release-event",
+    g_signal_connect(pdata->gdata->drawingArea, "button-release-event",
                      G_CALLBACK(on_mouse_move), pdata);
-    g_signal_connect(pdata->btnColorEmpty, "clicked",
+    g_signal_connect(pdata->gdata->btnColorEmpty, "clicked",
                      G_CALLBACK(on_color_switch), pdata);
-    g_signal_connect(pdata->btnColorWall, "clicked",
+    g_signal_connect(pdata->gdata->btnColorWall, "clicked",
                      G_CALLBACK(on_color_switch), pdata);
-    g_signal_connect(pdata->btnColorStart, "clicked",
+    g_signal_connect(pdata->gdata->btnColorStart, "clicked",
                      G_CALLBACK(on_color_switch), pdata);
-    g_signal_connect(pdata->btnColorEnd, "clicked", G_CALLBACK(on_color_switch),
-                     pdata);
+    g_signal_connect(pdata->gdata->btnColorEnd, "clicked",
+                     G_CALLBACK(on_color_switch), pdata);
     g_signal_connect(gridScale, "value-changed", G_CALLBACK(on_scale_changed),
                      pdata);
 
@@ -78,14 +86,15 @@ void on_exit(GtkWidget* widget, gpointer data) {
     if (data == NULL)
         return;
 
-    AData* d = (AData*)data;
+    ProgramData* d = (ProgramData*)data;
 
-    if (d->grid == NULL)
-        return;
+    if (d->adata->grid != NULL) {
+        for (int i = 0; i < d->adata->columns; i++)
+            free(d->adata->grid[i]);
+        free(d->adata->grid);
+    }
 
-    for (int i = 0; i < d->columns; i++)
-        free(d->grid[i]);
-    free(d->grid);
+    free(d->gdata);
 
     gtk_main_quit();
 }
@@ -117,7 +126,7 @@ void on_start(GtkWidget* widget, gpointer data) {
         astar(d->adata->grid, d->adata->columns, d->adata->rows,
               d->adata->startX, d->adata->startY, d->adata->endX,
               d->adata->endY);
-        gtk_widget_queue_draw(d->drawingArea); // Force redraw
+        gtk_widget_queue_draw(d->gdata->drawingArea); // Force redraw
     } else {
         printf("Error: No start/end cell exists!\n");
     }
@@ -135,11 +144,11 @@ gboolean on_mouse_move(GtkWidget* widget, GdkEvent* event, gpointer data) {
         d->mdata->y = (guint)e->y;
 
         if (update_grid(d))
-            gtk_widget_queue_draw(d->drawingArea); // Force redraw
+            gtk_widget_queue_draw(d->gdata->drawingArea); // Force redraw
     } else if (event->type == GDK_BUTTON_PRESS) {
         d->mdata->pressed = TRUE;
         if (update_grid(d))
-            gtk_widget_queue_draw(d->drawingArea); // Force redraw
+            gtk_widget_queue_draw(d->gdata->drawingArea); // Force redraw
     } else if (event->type == GDK_BUTTON_RELEASE) {
         d->mdata->pressed = FALSE;
     }
@@ -152,13 +161,13 @@ void on_color_switch(GtkWidget* widget, gpointer data) {
         return;
 
     ProgramData* d = (ProgramData*)data;
-    if (widget == d->btnColorEmpty) {
+    if (widget == d->gdata->btnColorEmpty) {
         d->selectedColor = tile_empty;
-    } else if (widget == d->btnColorWall) {
+    } else if (widget == d->gdata->btnColorWall) {
         d->selectedColor = tile_wall;
-    } else if (widget == d->btnColorStart) {
+    } else if (widget == d->gdata->btnColorStart) {
         d->selectedColor = tile_start;
-    } else if (widget == d->btnColorEnd) {
+    } else if (widget == d->gdata->btnColorEnd) {
         d->selectedColor = tile_end;
     }
 }
@@ -169,7 +178,7 @@ void on_scale_changed(GtkRange* range, gpointer data) {
 
     ProgramData* d = (ProgramData*)data;
     d->adata->cellSize = (int)gtk_range_get_value(range);
-    gtk_widget_queue_draw(d->drawingArea); // Force redraw
+    gtk_widget_queue_draw(d->gdata->drawingArea); // Force redraw
 }
 
 void draw_grid(cairo_t* cr, AData* data, int x, int y, int width, int height) {

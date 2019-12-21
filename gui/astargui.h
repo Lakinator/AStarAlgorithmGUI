@@ -1,8 +1,8 @@
 #ifndef _ASTAR_GUI_H_
 #define _ASTAR_GUI_H_
 
-#include <gtk/gtk.h>
 #include "../algorithm/astar.h"
+#include <gtk/gtk.h>
 
 typedef struct _AData {
     int** grid;
@@ -19,14 +19,18 @@ typedef struct _MouseData {
     guint y;
 } MouseData;
 
-typedef struct _ProgramData {
-    AData* adata;
-    MouseData* mdata;
+typedef struct _GtkData {
     GtkWidget* drawingArea;
     GtkWidget* btnColorEmpty;
     GtkWidget* btnColorWall;
     GtkWidget* btnColorStart;
     GtkWidget* btnColorEnd;
+} GtkData;
+
+typedef struct _ProgramData {
+    AData* adata;
+    MouseData* mdata;
+    GtkData* gdata;
     int selectedColor;
 } ProgramData;
 
