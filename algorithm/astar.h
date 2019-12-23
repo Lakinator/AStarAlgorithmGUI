@@ -11,8 +11,13 @@
 #define tile_end 3
 #define tile_open 7
 #define tile_closed 9
+#define tile_path tile_closed
 
-void astar(int** grid, int width, int height, int startX, int startY, int endX, int endY);
+// resultPath contains after calculation startpoint, endpoint and the path in
+// between -> steps = resultPath->len - 1 (going onto endpoint is also
+// considered a step)
+void astar(int** grid, int width, int height, int startX, int startY, int endX,
+           int endY, LIST* resultPath);
 void draw(int** grid, int width, int height);
 void drawFinalPath(int** grid, int width, int height, POINT* lastPoint,
                    POINT* start, POINT* end);

@@ -4,11 +4,12 @@ void init_gui(ProgramData* pdata) {
     GtkWidget* window;
     GtkWidget *layoutBox, *layoutGrid;
 
-    GtkWidget* btnStart;
-    GtkWidget *labelStart, *labelTiles;
+    GtkWidget *labelStart, *labelTiles, *labelSize, *labelPath;
     GtkWidget* gridScale;
 
     pdata->gdata = malloc(sizeof(GtkData));
+    pdata->adata->resultPath = malloc(sizeof(LIST));
+    pdata->adata->resultPath->len = 0;
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     layoutBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -19,21 +20,29 @@ void init_gui(ProgramData* pdata) {
     pdata->gdata->btnColorStart = gtk_button_new_with_label("Start");
     pdata->gdata->btnColorEnd = gtk_button_new_with_label("End");
 
-    btnStart = gtk_button_new_with_label("Run");
+    pdata->gdata->btnStart = gtk_button_new_with_label("Run");
     labelStart = gtk_label_new("A* Version 1.0");
     labelTiles = gtk_label_new("Choose Tile:");
+    labelSize = gtk_label_new("Cell size:");
+    labelPath = gtk_label_new("Auto draw path:");
     gridScale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 20, 80, 1);
+    pdata->gdata->pathSwitch = gtk_switch_new();
 
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    // gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
+
+    gtk_widget_set_sensitive(pdata->gdata->btnStart, FALSE);
 
     gtk_grid_set_column_spacing(GTK_GRID(layoutGrid), 15);
     gtk_grid_set_row_spacing(GTK_GRID(layoutGrid), 15);
 
     gtk_widget_set_size_request(GTK_WIDGET(pdata->gdata->drawingArea), 650,
-                                450);
+                                550);
 
     gtk_range_set_value(GTK_RANGE(gridScale), pdata->adata->cellSize);
+
+    gtk_switch_set_active(GTK_SWITCH(pdata->gdata->pathSwitch), FALSE);
+    gtk_widget_set_hexpand(pdata->gdata->pathSwitch, FALSE);
+    gtk_widget_set_halign(pdata->gdata->pathSwitch, GTK_ALIGN_CENTER);
 
     // Basic layout containers
     gtk_container_add(GTK_CONTAINER(window), layoutBox);
@@ -42,7 +51,7 @@ void init_gui(ProgramData* pdata) {
                        TRUE, 0);
     // Grid components
     gtk_grid_attach(GTK_GRID(layoutGrid), labelStart, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(layoutGrid), btnStart, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnStart, 0, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(layoutGrid), labelTiles, 0, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnColorEmpty, 0, 3, 1,
                     1);
@@ -52,7 +61,11 @@ void init_gui(ProgramData* pdata) {
                     1);
     gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->btnColorEnd, 0, 6, 1,
                     1);
-    gtk_grid_attach(GTK_GRID(layoutGrid), gridScale, 0, 7, 2, 1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), labelSize, 0, 7, 1, 1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), gridScale, 0, 8, 1, 1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), labelPath, 0, 9, 1, 1);
+    gtk_grid_attach(GTK_GRID(layoutGrid), pdata->gdata->pathSwitch, 0, 10, 1,
+                    2);
 
     gtk_widget_set_events(pdata->gdata->drawingArea,
                           GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
@@ -60,8 +73,9 @@ void init_gui(ProgramData* pdata) {
 
     g_signal_connect(window, "destroy", G_CALLBACK(on_exit), pdata);
     g_signal_connect(pdata->gdata->drawingArea, "draw", G_CALLBACK(on_draw),
-                     pdata->adata);
-    g_signal_connect(btnStart, "clicked", G_CALLBACK(on_start), pdata);
+                     pdata);
+    g_signal_connect(pdata->gdata->btnStart, "clicked", G_CALLBACK(on_start),
+                     pdata);
     g_signal_connect(pdata->gdata->drawingArea, "motion-notify-event",
                      G_CALLBACK(on_mouse_move), pdata);
     g_signal_connect(pdata->gdata->drawingArea, "button-press-event",
@@ -78,6 +92,8 @@ void init_gui(ProgramData* pdata) {
                      G_CALLBACK(on_color_switch), pdata);
     g_signal_connect(gridScale, "value-changed", G_CALLBACK(on_scale_changed),
                      pdata);
+    g_signal_connect(pdata->gdata->pathSwitch, "state-set",
+                     G_CALLBACK(on_switch_toggled), pdata);
 
     gtk_widget_show_all(window);
 }
@@ -103,9 +119,9 @@ gboolean on_draw(GtkWidget* widget, cairo_t* cr, gpointer data) {
     if (data == NULL)
         return FALSE;
 
-    AData* d = (AData*)data;
+    ProgramData* d = (ProgramData*)data;
 
-    draw_grid(cr, data, 5, 5, gtk_widget_get_allocated_width(widget),
+    draw_grid(cr, d, 5, 5, gtk_widget_get_allocated_width(widget),
               gtk_widget_get_allocated_height(widget));
 
     return FALSE;
@@ -120,16 +136,7 @@ void on_start(GtkWidget* widget, gpointer data) {
     if (d->adata->grid == NULL)
         return;
 
-    // Call astar main method if start/end exist
-    if (d->adata->startX >= 0 && d->adata->startY >= 0 && d->adata->endX >= 0 &&
-        d->adata->endY >= 0) {
-        astar(d->adata->grid, d->adata->columns, d->adata->rows,
-              d->adata->startX, d->adata->startY, d->adata->endX,
-              d->adata->endY);
-        gtk_widget_queue_draw(d->gdata->drawingArea); // Force redraw
-    } else {
-        printf("Error: No start/end cell exists!\n");
-    }
+    run_algorithm(d);
 }
 
 gboolean on_mouse_move(GtkWidget* widget, GdkEvent* event, gpointer data) {
@@ -181,28 +188,46 @@ void on_scale_changed(GtkRange* range, gpointer data) {
     gtk_widget_queue_draw(d->gdata->drawingArea); // Force redraw
 }
 
-void draw_grid(cairo_t* cr, AData* data, int x, int y, int width, int height) {
-    int offset = data->cellSize / 20;
+gboolean on_switch_toggled(GtkSwitch* widget, gboolean state, gpointer data) {
+    if (data == NULL)
+        return FALSE;
 
-    int columns_new = (width - x) / data->cellSize;
-    int rows_new = (height - y) / data->cellSize;
+    ProgramData* d = (ProgramData*)data;
 
-    realloc_grid(data, columns_new, rows_new);
+    // Disable/Enable run button if auto run is enabled/disabled
+    gtk_widget_set_sensitive(d->gdata->btnStart, !state);
+
+    if (state) {
+        run_algorithm(d);
+    }
+
+    return FALSE;
+}
+
+void draw_grid(cairo_t* cr, ProgramData* pdata, int x, int y, int width,
+               int height) {
+    int offset = pdata->adata->cellSize / 20;
+
+    int columns_new = (width - x) / pdata->adata->cellSize;
+    int rows_new = (height - y) / pdata->adata->cellSize;
+
+    realloc_grid(pdata, columns_new, rows_new);
 
     // Background
     cairo_set_source_rgb(cr, 0, 0, 200);
-    for (int i = 0; i < data->columns; i++) {
-        for (int j = 0; j < data->rows; j++) {
-            cairo_rectangle(cr, i * data->cellSize + x, j * data->cellSize + y,
-                            data->cellSize, data->cellSize);
+    for (int i = 0; i < pdata->adata->columns; i++) {
+        for (int j = 0; j < pdata->adata->rows; j++) {
+            cairo_rectangle(cr, i * pdata->adata->cellSize + x,
+                            j * pdata->adata->cellSize + y,
+                            pdata->adata->cellSize, pdata->adata->cellSize);
             cairo_fill(cr);
         }
     }
 
     // Actual Squares
-    for (int i = 0; i < data->columns; i++) {
-        for (int j = 0; j < data->rows; j++) {
-            switch (data->grid[i][j]) {
+    for (int i = 0; i < pdata->adata->columns; i++) {
+        for (int j = 0; j < pdata->adata->rows; j++) {
+            switch (pdata->adata->grid[i][j]) {
             case tile_wall:
                 cairo_set_source_rgb(cr, 0, 0, 0);
                 break;
@@ -212,17 +237,17 @@ void draw_grid(cairo_t* cr, AData* data, int x, int y, int width, int height) {
             case tile_end:
                 cairo_set_source_rgb(cr, 0, 255, 0);
                 break;
-            case tile_closed:
+            case tile_path:
                 cairo_set_source_rgb(cr, 255, 255, 0);
                 break;
             default:
                 cairo_set_source_rgb(cr, 255, 255, 255);
                 break;
             }
-            cairo_rectangle(cr, i * data->cellSize + offset + x,
-                            j * data->cellSize + offset + y,
-                            data->cellSize - (offset * 2),
-                            data->cellSize - (offset * 2));
+            cairo_rectangle(cr, i * pdata->adata->cellSize + offset + x,
+                            j * pdata->adata->cellSize + offset + y,
+                            pdata->adata->cellSize - (offset * 2),
+                            pdata->adata->cellSize - (offset * 2));
             cairo_fill(cr);
         }
     }
@@ -270,6 +295,27 @@ gboolean update_grid(ProgramData* pdata) {
                     pdata->adata->endY = -1;
                 }
             }
+
+            // Remove old path
+            if (pdata->selectedColor == tile_empty ||
+                pdata->selectedColor == tile_wall ||
+                pdata->selectedColor == tile_start ||
+                pdata->selectedColor == tile_end) {
+
+                remove_path_from_grid(pdata->adata);
+            }
+
+            // Option to enable/disable instant calculation of the path
+            if (gtk_switch_get_active(GTK_SWITCH(pdata->gdata->pathSwitch)))
+                run_algorithm(pdata);
+            else {
+                // Toggle run button
+                gboolean active =
+                    (pdata->adata->startX >= 0 && pdata->adata->startY >= 0 &&
+                     pdata->adata->endX >= 0 && pdata->adata->endY >= 0);
+
+                gtk_widget_set_sensitive(pdata->gdata->btnStart, active);
+            }
         }
 
         return TRUE;
@@ -278,17 +324,19 @@ gboolean update_grid(ProgramData* pdata) {
     return FALSE;
 }
 
-gboolean realloc_grid(AData* adata, int columns_new, int rows_new) {
+gboolean realloc_grid(ProgramData* pdata, int columns_new, int rows_new) {
     // Realloc grid only if size changed
-    if (adata->columns != columns_new || adata->rows != rows_new) {
+    if (pdata->adata->columns != columns_new ||
+        pdata->adata->rows != rows_new) {
 
         // Columns
-        int** temp = adata->grid;
-        adata->grid = realloc(adata->grid, columns_new * sizeof(int*));
+        int** temp = pdata->adata->grid;
+        pdata->adata->grid =
+            realloc(pdata->adata->grid, columns_new * sizeof(int*));
 
-        if (adata->grid == NULL) {
+        if (pdata->adata->grid == NULL) {
             printf("Realloc column failed\n");
-            adata->grid = temp;
+            pdata->adata->grid = temp;
             return FALSE;
         }
 
@@ -297,42 +345,81 @@ gboolean realloc_grid(AData* adata, int columns_new, int rows_new) {
 
             // Check for completely new added columns, which need to be set
             // to NULL for successful realloc
-            if (i >= adata->columns)
-                adata->grid[i] = NULL;
+            if (i >= pdata->adata->columns)
+                pdata->adata->grid[i] = NULL;
 
-            int* t = adata->grid[i];
-            adata->grid[i] = realloc(adata->grid[i], rows_new * sizeof(int));
+            int* t = pdata->adata->grid[i];
+            pdata->adata->grid[i] =
+                realloc(pdata->adata->grid[i], rows_new * sizeof(int));
 
-            if (adata->grid[i] == NULL) {
+            if (pdata->adata->grid[i] == NULL) {
                 printf("Realloc row failed\n");
-                adata->grid[i] = t;
+                pdata->adata->grid[i] = t;
                 return FALSE;
             }
 
             // Init new int's to 0
-            for (int j = adata->rows; j < rows_new; j++) {
-                adata->grid[i][j] = tile_empty;
+            for (int j = pdata->adata->rows; j < rows_new; j++) {
+                pdata->adata->grid[i][j] = tile_empty;
             }
 
             // Init new int rows to 0
-            if (i >= adata->columns) {
+            if (i >= pdata->adata->columns) {
                 for (int j = 0; j < rows_new; j++) {
-                    adata->grid[i][j] = tile_empty;
+                    pdata->adata->grid[i][j] = tile_empty;
                 }
             }
         }
 
-        adata->columns = columns_new;
-        adata->rows = rows_new;
+        pdata->adata->columns = columns_new;
+        pdata->adata->rows = rows_new;
 
         // Check if start/end were removed
-        if (adata->startX >= adata->columns || adata->startY >= adata->rows) {
-            adata->startX = -1;
-            adata->startY = -1;
+        if (pdata->adata->startX >= pdata->adata->columns ||
+            pdata->adata->startY >= pdata->adata->rows) {
+            pdata->adata->startX = -1;
+            pdata->adata->startY = -1;
+            gtk_widget_set_sensitive(pdata->gdata->btnStart, FALSE);
+            remove_path_from_grid(pdata->adata);
         }
-        if (adata->endX >= adata->columns || adata->endY >= adata->rows) {
-            adata->endX = -1;
-            adata->endY = -1;
+        if (pdata->adata->endX >= pdata->adata->columns ||
+            pdata->adata->endY >= pdata->adata->rows) {
+            pdata->adata->endX = -1;
+            pdata->adata->endY = -1;
+            gtk_widget_set_sensitive(pdata->gdata->btnStart, FALSE);
+            remove_path_from_grid(pdata->adata);
         }
+    }
+}
+
+void remove_path_from_grid(AData* adata) {
+    // Remove old path
+    if (adata->resultPath->len > 0) {
+        // Removing each cell from the path by deleting the
+        // first cell etc. (start at index 0 in the list)
+        NODE* n = NULL;
+        while (adata->resultPath->len > 0) {
+            n = l_getNodeAt(adata->resultPath, 0);
+            // Making sure only path tiles
+            // get erased from the grid
+            if (n->data.x <= adata->columns && n->data.y <= adata->rows) {
+                if (adata->grid[n->data.x][n->data.y] == tile_path)
+                    adata->grid[n->data.x][n->data.y] = tile_empty;
+            }
+            l_deleteNodeAt(adata->resultPath, 0);
+        }
+    }
+}
+
+void run_algorithm(ProgramData* pdata) {
+    // Call astar main method if start and end exist
+    if (pdata->adata->startX >= 0 && pdata->adata->startY >= 0 &&
+        pdata->adata->endX >= 0 && pdata->adata->endY >= 0) {
+        astar(pdata->adata->grid, pdata->adata->columns, pdata->adata->rows,
+              pdata->adata->startX, pdata->adata->startY, pdata->adata->endX,
+              pdata->adata->endY, pdata->adata->resultPath);
+        gtk_widget_queue_draw(pdata->gdata->drawingArea); // Force redraw
+    } else {
+        printf("Error: Start- and Endcell need to be specified!\n");
     }
 }

@@ -20,7 +20,8 @@ int main(int argc, char** argv) {
         .y = 0,
     };
 
-    ProgramData pdata = {.adata = &adata, .mdata = &mdata, .selectedColor = tile_wall};
+    ProgramData pdata = {
+        .adata = &adata, .mdata = &mdata, .selectedColor = tile_wall};
 
     init_gui(&pdata);
 

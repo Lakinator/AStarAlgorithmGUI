@@ -13,7 +13,7 @@ int n_cmp(NODE* n1, NODE* n2);
 void n_insertLast(NODE* node, POINT data);
 int n_deleteNodeAt(NODE* node, int pos);
 NODE* n_getNodeAt(NODE* node, int pos);
-int n_getNodePos(NODE* node, NODE* n, int pos);
+int n_getNodePos(NODE* node, NODE* n, int pos); // Node n will be free'd !
 void n_printNode(NODE* node);
 
 #endif

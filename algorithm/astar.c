@@ -1,7 +1,7 @@
 #include "astar.h"
 
 void astar(int** grid, int width, int height, int startX, int startY, int endX,
-           int endY) {
+           int endY, LIST* resultPath) {
     POINT start;
     POINT end;
 
@@ -112,6 +112,13 @@ void astar(int** grid, int width, int height, int startX, int startY, int endX,
         /* CHECK IF END IS REACHED */
 
         if (manhattanDistance(s, &end) == 0) {
+            // Fill path with copies of the points and adjust pathLen
+            POINT* p = s;
+            while (p != NULL) {
+                l_insertLast(resultPath, *p);
+                p = p->parent;
+            }
+
             drawFinalPath(grid, width, height, s, &start, &end);
             found = 1;
         }
