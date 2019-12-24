@@ -4,16 +4,18 @@
 #include "../point/point.h"
 
 typedef struct _NODE {
-    POINT data;
+    POINT* data;
     struct _NODE* next;
 } NODE;
 
-NODE* createNode(POINT data); // Pointer must be free'd !
-int n_cmp(NODE* n1, NODE* n2);
-void n_insertLast(NODE* node, POINT data);
-int n_deleteNodeAt(NODE* node, int pos);
-NODE* n_getNodeAt(NODE* node, int pos);
-int n_getNodePos(NODE* node, NODE* n, int pos); // Node n will be free'd !
-void n_printNode(NODE* node);
+NODE* node_createNode(
+    POINT* data); // Call node_deleteNode if the node is not needed anymore
+void node_destroyNode(NODE* node); // This does not destroy the data
+int node_compare(NODE* n1, NODE* n2);
+void node_insertLast(NODE* node, POINT* data);
+int node_deleteNodeAt(NODE* node, int pos); // 1 if success, 0 if not
+NODE* node_getNodeAt(NODE* node, int pos);
+int node_getNodePosWithPoint(NODE* node, POINT* p, int pos);
+void node_printNode(NODE* node);
 
 #endif

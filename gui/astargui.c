@@ -8,8 +8,7 @@ void init_gui(ProgramData* pdata) {
     GtkWidget* gridScale;
 
     pdata->gdata = malloc(sizeof(GtkData));
-    pdata->adata->resultPath = malloc(sizeof(LIST));
-    pdata->adata->resultPath->len = 0;
+    pdata->adata->resultPath = list_createList();
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     layoutBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -103,6 +102,10 @@ void on_exit(GtkWidget* widget, gpointer data) {
         return;
 
     ProgramData* d = (ProgramData*)data;
+
+    remove_path_from_grid(d->adata);
+
+    list_destroyList(d->adata->resultPath);
 
     if (d->adata->grid != NULL) {
         for (int i = 0; i < d->adata->columns; i++)
@@ -276,6 +279,12 @@ gboolean update_grid(ProgramData* pdata) {
                 }
                 pdata->adata->startX = p_x;
                 pdata->adata->startY = p_y;
+
+                // Remove end if it was overdrawn by start
+                if (p_x == pdata->adata->endX && p_y == pdata->adata->endY) {
+                    pdata->adata->endX = -1;
+                    pdata->adata->endY = -1;
+                }
             } else if (pdata->selectedColor == tile_end) {
                 if (pdata->adata->endX >= 0 && pdata->adata->endY >= 0) {
                     pdata->adata->grid[pdata->adata->endX][pdata->adata->endY] =
@@ -283,6 +292,13 @@ gboolean update_grid(ProgramData* pdata) {
                 }
                 pdata->adata->endX = p_x;
                 pdata->adata->endY = p_y;
+
+                // Remove start if it was overdrawn by end
+                if (p_x == pdata->adata->startX &&
+                    p_y == pdata->adata->startY) {
+                    pdata->adata->startX = -1;
+                    pdata->adata->startY = -1;
+                }
             } else {
                 // Clear previous start/end coordinates if they were overdrawn
                 if (p_x == pdata->adata->startX &&
@@ -381,9 +397,8 @@ gboolean realloc_grid(ProgramData* pdata, int columns_new, int rows_new) {
             pdata->adata->startY = -1;
             gtk_widget_set_sensitive(pdata->gdata->btnStart, FALSE);
             remove_path_from_grid(pdata->adata);
-        }
-        if (pdata->adata->endX >= pdata->adata->columns ||
-            pdata->adata->endY >= pdata->adata->rows) {
+        } else if (pdata->adata->endX >= pdata->adata->columns ||
+                   pdata->adata->endY >= pdata->adata->rows) {
             pdata->adata->endX = -1;
             pdata->adata->endY = -1;
             gtk_widget_set_sensitive(pdata->gdata->btnStart, FALSE);
@@ -392,21 +407,22 @@ gboolean realloc_grid(ProgramData* pdata, int columns_new, int rows_new) {
     }
 }
 
-void remove_path_from_grid(AData* adata) {
+void remove_path_from_grid(AStarData* adata) {
     // Remove old path
     if (adata->resultPath->len > 0) {
         // Removing each cell from the path by deleting the
         // first cell etc. (start at index 0 in the list)
         NODE* n = NULL;
         while (adata->resultPath->len > 0) {
-            n = l_getNodeAt(adata->resultPath, 0);
+            n = list_getNodeAt(adata->resultPath, 0);
             // Making sure only path tiles
             // get erased from the grid
-            if (n->data.x < adata->columns && n->data.y < adata->rows) {
-                if (adata->grid[n->data.x][n->data.y] == tile_path)
-                    adata->grid[n->data.x][n->data.y] = tile_empty;
+            if (n->data->x < adata->columns && n->data->y < adata->rows) {
+                if (adata->grid[n->data->x][n->data->y] == tile_path)
+                    adata->grid[n->data->x][n->data->y] = tile_empty;
             }
-            l_deleteNodeAt(adata->resultPath, 0);
+            point_destroyPoint(n->data);
+            list_deleteNodeAt(adata->resultPath, 0);
         }
     }
 }
@@ -415,6 +431,7 @@ void run_algorithm(ProgramData* pdata) {
     // Call astar main method if start and end exist
     if (pdata->adata->startX >= 0 && pdata->adata->startY >= 0 &&
         pdata->adata->endX >= 0 && pdata->adata->endY >= 0) {
+        remove_path_from_grid(pdata->adata);
         astar(pdata->adata->grid, pdata->adata->columns, pdata->adata->rows,
               pdata->adata->startX, pdata->adata->startY, pdata->adata->endX,
               pdata->adata->endY, pdata->adata->resultPath);

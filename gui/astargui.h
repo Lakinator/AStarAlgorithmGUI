@@ -4,7 +4,7 @@
 #include "../algorithm/astar.h"
 #include <gtk/gtk.h>
 
-typedef struct _AData {
+typedef struct _AStarData {
     int** grid;
     int cellSize;
     int columns;
@@ -12,7 +12,7 @@ typedef struct _AData {
     int startX, startY;
     int endX, endY;
     LIST* resultPath;
-} AData;
+} AStarData;
 
 typedef struct _MouseData {
     gboolean pressed;
@@ -31,7 +31,7 @@ typedef struct _GtkData {
 } GtkData;
 
 typedef struct _ProgramData {
-    AData* adata;
+    AStarData* adata;
     MouseData* mdata;
     GtkData* gdata;
     int selectedColor;
@@ -51,7 +51,7 @@ void draw_grid(cairo_t* cr, ProgramData* pdata, int x, int y, int width, int hei
 gboolean update_grid(ProgramData* pdata);
 // @return: successful
 gboolean realloc_grid(ProgramData* pdata, int new_columns, int new_rows);
-void remove_path_from_grid(AData* adata);
+void remove_path_from_grid(AStarData* adata);
 void run_algorithm(ProgramData* pdata);
 
 #endif

@@ -19,9 +19,10 @@
 void astar(int** grid, int width, int height, int startX, int startY, int endX,
            int endY, LIST* resultPath);
 void draw(int** grid, int width, int height);
-void drawFinalPath(int** grid, int width, int height, POINT* lastPoint,
+void drawFinalPath(int** grid, int width, int height, LIST* path,
                    POINT* start, POINT* end);
 int manhattanDistance(POINT* p1, POINT* p2);
 POINT* lowestFScore(LIST* list);
+void destroyList(LIST* list);
 
 #endif

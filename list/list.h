@@ -8,11 +8,14 @@ typedef struct _LIST {
     struct _NODE* start;
 } LIST;
 
-void l_insertFirst(LIST* list, POINT data);
-void l_insertLast(LIST* list, POINT data);
-int l_deleteNodeAt(LIST* list, int pos);
-NODE* l_getNodeAt(LIST* list, int pos);
-int l_getNodePos(LIST* list, NODE* n); // NODE *n will be free'd !
-void l_printList(LIST* list);
+LIST* list_createList(); // Call list_deleteList if the list is not needed
+                         // anymore
+void list_destroyList(LIST* list); // This does not destroy the nodes
+void list_insertFirst(LIST* list, POINT* data);
+void list_insertLast(LIST* list, POINT* data);
+int list_deleteNodeAt(LIST* list, int pos); // 1 if success, 0 if not
+NODE* list_getNodeAt(LIST* list, int pos);
+int list_getNodePos(LIST* list, POINT* p);
+void list_printList(LIST* list);
 
 #endif

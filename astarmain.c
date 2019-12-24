@@ -3,7 +3,7 @@
 int main(int argc, char** argv) {
     gtk_init(&argc, &argv);
 
-    AData adata = {
+    AStarData adata = {
         .grid = NULL,
         .cellSize = 35,
         .columns = 0,
