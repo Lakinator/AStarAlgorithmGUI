@@ -402,7 +402,7 @@ void remove_path_from_grid(AData* adata) {
             n = l_getNodeAt(adata->resultPath, 0);
             // Making sure only path tiles
             // get erased from the grid
-            if (n->data.x <= adata->columns && n->data.y <= adata->rows) {
+            if (n->data.x < adata->columns && n->data.y < adata->rows) {
                 if (adata->grid[n->data.x][n->data.y] == tile_path)
                     adata->grid[n->data.x][n->data.y] = tile_empty;
             }
