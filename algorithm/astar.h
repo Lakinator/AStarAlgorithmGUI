@@ -23,6 +23,6 @@ void drawFinalPath(int** grid, int width, int height, LIST* path,
                    POINT* start, POINT* end);
 int manhattanDistance(POINT* p1, POINT* p2);
 POINT* lowestFScore(LIST* list);
-void destroyList(LIST* list);
+void destroyListWithData(LIST* list);
 
 #endif

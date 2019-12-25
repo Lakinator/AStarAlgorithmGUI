@@ -126,8 +126,8 @@ void astar(int** grid, int width, int height, int startX, int startY, int endX,
 
     /* FREE MEMORY */
 
-    destroyList(open);
-    destroyList(closed);
+    destroyListWithData(open);
+    destroyListWithData(closed);
 
     printf("\n");
 }
@@ -199,7 +199,7 @@ POINT* lowestFScore(LIST* list) {
     return p;
 }
 
-void destroyList(LIST* list) {
+void destroyListWithData(LIST* list) {
     int index = list->len - 1;
     POINT* destroyer = NULL;
     while (index >= 0) {

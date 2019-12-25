@@ -20,7 +20,7 @@ void init_gui(ProgramData* pdata) {
     pdata->gdata->btnColorEnd = gtk_button_new_with_label("End");
 
     pdata->gdata->btnStart = gtk_button_new_with_label("Run");
-    labelStart = gtk_label_new("A* Version 1.0");
+    labelStart = gtk_label_new("A* Version 1.1");
     labelTiles = gtk_label_new("Choose Tile:");
     labelSize = gtk_label_new("Cell size:");
     labelPath = gtk_label_new("Auto draw path:");

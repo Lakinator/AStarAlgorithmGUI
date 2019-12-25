@@ -13,9 +13,11 @@ typedef struct _POINT {
     struct _POINT* parent;
 } POINT;
 
-POINT* point_createPoint(
-    int x, int y); // Call point_deletePoint if the point is not needed anymore
-void point_destroyPoint(POINT* point); // This does not destroy the parent
+// Call point_deletePoint if the point is not needed anymore
+POINT* point_createPoint(int x, int y);
+// Does not destroy parent
+void point_destroyPoint(POINT* point);
+// @return: 1 = success, 0 = no success
 int point_compare(POINT* p1, POINT* p2);
 POINT* point_copyPoint(POINT* p);
 void point_print(POINT* p);

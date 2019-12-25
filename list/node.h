@@ -8,12 +8,15 @@ typedef struct _NODE {
     struct _NODE* next;
 } NODE;
 
-NODE* node_createNode(
-    POINT* data); // Call node_deleteNode if the node is not needed anymore
-void node_destroyNode(NODE* node); // This does not destroy the data
+// Call node_deleteNode if the node is not needed anymore
+NODE* node_createNode(POINT* data);
+// Does not destroy data
+void node_destroyNode(NODE* node);
+// @return: 1 = success, 0 = no success
 int node_compare(NODE* n1, NODE* n2);
 void node_insertLast(NODE* node, POINT* data);
-int node_deleteNodeAt(NODE* node, int pos); // 1 if success, 0 if not
+// @return: 1 = success, 0 = no success
+int node_deleteNodeAt(NODE* node, int pos);
 NODE* node_getNodeAt(NODE* node, int pos);
 int node_getNodePosWithPoint(NODE* node, POINT* p, int pos);
 void node_printNode(NODE* node);
